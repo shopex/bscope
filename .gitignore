@@ -1,0 +1,27 @@
+.*
+!.gitignore
+*.swap
+*.o
+*.log
+*.log.*
+bscope
+*.config
+*.conf
+config.status
+Makefile
+libnids-1.24/config.log
+libnids-1.24/config.status
+libnids-1.24/samples/Makefile
+libnids-1.24/src/Makefile
+libnids-1.24/src/config.h
+libnids-1.24/src/libnids.a
+autom4te.cache
+include.mk
+src/libnids-1.24/CHANGES src/libnids-1.24/COPYING src/libnids-1.24/CREDITS src/libnids-1.24/MISC src/libnids-1.24/Makefile src/libnids-1.24/Makefile.in src/libnids-1.24/README src/libnids-1.24/aclocal.m4 src/libnids-1.24/config.guess src/libnids-1.24/config.sub src/libnids-1.24/configure src/libnids-1.24/configure.in src/libnids-1.24/doc src/libnids-1.24/install-sh src/libnids-1.24/mkinstalldirs src/libnids-1.24/samples src/libnids-1.24/src
+libnids.a
+libnet/*
+src/libnet/*
+src/libnids-1.24/src/config.h
+src/config.h
+src/rabbitmq-c-0.4.0/*
+src/msgpack-0.5.4/*

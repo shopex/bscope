@@ -1,0 +1,24 @@
+[master]
+host=127.0.0.1
+port=5672
+user=guest
+password=guest
+vhost=/
+swap_file=/tmp/bscope.swap
+
+[http-scope]
+daemon-mode = yes
+pid-file = /var/run/bscope.pid
+network_interface = eth0
+
+node-name = default
+;host-name = localhost google.com scm.ec-ae.com
+host-port = 80
+packet-checksum=no
+host-ip = 0.0.0.0/0
+catch-content-by-code= 5xx
+catch-request-header = user-agent referer accept
+catch-response-header = server host cookie x-powered-by content-type
+catch-cookie = ASPSESSID SESSID PHPSESSID 
+catch-get = *
+catch-post = *

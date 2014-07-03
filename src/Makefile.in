@@ -1,0 +1,75 @@
+include ../include.mk
+
+CURHOST=$(shell uname -s)
+
+OBJS=main.o ini.o status.o session.o utils.o callback.o functions.o http-parser/libhttp_parser.o
+TARGET=bscope
+LIB_NIDS_DIR=libnids-1.24
+LIB_NIDS_A=$(LIB_NIDS_DIR)/src/libnids.a
+LIB_NET_A= libnet/src/libnet.a
+LIB_RABBITMQ_DIR=rabbitmq-c-0.4.0
+LIB_RABBITMQ_A=${LIB_RABBITMQ_DIR}/build/librabbitmq/librabbitmq.a
+LIB_MSGPACK_DIR=msgpack-0.5.4
+LIB_MSGPACK_A = ${LIB_MSGPACK_DIR}/src/.libs/libmsgpackc.a
+
+
+LIBS_CFLAGS	= @GLIB_CFLAGS@ @GTHREAD_CFLAGS@
+
+CFLAGS  := -I$(LIB_RABBITMQ_DIR)/librabbitmq -I$(LIB_MSGPACK_DIR)/src ${LIBS_CFLAGS} -DNIDS_H=\"$(LIB_NIDS_DIR)/src/nids.h\" -DCONF=\"@sysconfdir@/bscope.conf\" @CFLAGS@ @DEFS@ -I"${includedir}" -w
+ifeq ($(CURHOST), Darwin)
+LDFLAGS := @LDFLAGS@ @LIBS@ @GLIB_LIBS@ @GTHREAD_LIBS@ -L"${libdir}"%
+else
+LDFLAGS := @LDFLAGS@ @LIBS@ @GLIB_LIBS@ @GTHREAD_LIBS@ -lrt -L"${libdir}"%
+endif
+
+all: $(TARGET)
+
+printsysinfo:
+	-echo $(CURHOST)
+
+$(TARGET): $(OBJS) $(LIB_NIDS_A) ${LIB_NET_A} ${LIB_RABBITMQ_A} $(LIB_MSGPACK_A)
+	$(CC) -w $(OBJS) $(LIB_NIDS_A) ${LIB_NET_A} ${LIB_RABBITMQ_A} $(LIB_MSGPACK_A) $(LDFLAGS) \
+		-lpcap -o $@
+
+$(LIB_MSGPACK_A):
+	(cd $(LIB_MSGPACK_DIR); ./configure --enable-shared=no --enable-static=yes --disable-cxx)
+	$(MAKE) -C $(LIB_MSGPACK_DIR)
+
+${LIB_RABBITMQ_A}:
+	@rm -rf ${LIB_RABBITMQ_DIR}/build
+	mkdir -p ${LIB_RABBITMQ_DIR}/build
+	(cd $(LIB_RABBITMQ_DIR)/build ; \
+		cmake -DBUILD_EXAMPLES=OFF \
+		 	  -DBUILD_SHARED_LIBS=OFF \
+		 	  -DBUILD_STATIC_LIBS=ON \
+		 	  -DBUILD_TESTS=OFF \
+		 	  -DBUILD_TOOLS=OFF \
+		 	  -DBUILD_TOOLS_DOCS=OFF \
+		 	  -DENABLE_SSL_SUPPORT=OFF \
+		 	  -DENABLE_THREAD_SAFETY=ON \
+		 	  -DBUILD_API_DOCS=OFF ..; \
+		cmake --build . )
+	$(MAKE) -C $(LIB_RABBITMQ_DIR)/build
+
+$(LIB_NIDS_A): $(LIB_NET_A)
+	(cd $(LIB_NIDS_DIR) ; ./configure --with-libnet=../libnet )
+	$(MAKE) -C $(LIB_NIDS_DIR)
+
+${LIB_NET_A}:
+	(cd libnet; ./configure)
+	$(MAKE) -C libnet
+
+http-parser/libhttp_parser.o:
+	$(MAKE) -C http-parser libhttp_parser.o
+
+clean:
+	-$(MAKE) -C $(LIB_NIDS_DIR) clean
+	-$(MAKE) -C http-parser clean
+	-$(MAKE) -C $(LIB_RABBITMQ_DIR) clean
+	-$(MAKE) -C $(LIB_MSGPACK_DIR) clean
+	-rm -rf *.o $(TARGET)
+
+install:
+	$(INSTALL) -d ${DESTDIR}${bindir} ${DESTDIR}${sysconfdir}
+	$(INSTALL) bscope ${DESTDIR}${bindir}/bscope
+	$(INSTALL) -m 0644 ../bscope.conf.simple ${DESTDIR}${sysconfdir}/bscope.conf
